@@ -1,0 +1,16 @@
+project ISqrt is
+
+   for Source_Dirs use (".");
+   for Object_Dir use ".";
+   for Main use ("main.adb");
+
+   package Prove is
+      for Proof_Switches ("Ada") use ("--report=statistics", "--level=4", "--timeout=5", "-j8");
+   end Prove;
+
+   package Compiler is
+--      for Default_Switches ("ada") use ("-gnatwa", "-O0", "-gnata", "-gnaty");
+      for Default_Switches ("ada") use ("-gnatwa", "-O3", "-gnatp", "-gnaty");
+   end Compiler;
+
+end ISqrt;
