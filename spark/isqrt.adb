@@ -64,13 +64,14 @@ is
       return Sqrt_Range
    is
       subtype U32 is Unsigned_32;
+      subtype Bit_Number is Natural range 0 .. 15;
       UX, M, Y, B : U32;
    begin
       UX := U32 (X);
       M  := 16#4000_0000#;
       Y  := 0;
 
-      for I in reverse Natural range 0 .. 15 loop
+      for I in reverse Bit_Number loop
          B := Y + M;
 
          if (UX >= B) then
@@ -81,7 +82,7 @@ is
          end if;
 
          pragma Loop_Invariant (UX <= U32 (X));
-         pragma Loop_Invariant (M <= (2**(2 * I)));
+         pragma Loop_Invariant (M = (2**(2 * I)));
          pragma Loop_Invariant (Y < (2**(I + 16)));
          pragma Loop_Invariant (2**I - 1 <= 32767);
 
@@ -91,12 +92,26 @@ is
          --  unknown. If we assume the unknown bits are all
          --  zero, then then value must be just right or
          --  too small, so...
+
+         --  2*I LSBs of Y are all zero
+         pragma Loop_Invariant (2**(2 * I) /= 0);
+         pragma Loop_Invariant (Y mod (2**(2 * I)) = 0);
+
+         --  Shifting Y right by I bits yields a 16-bit value
+         --  that is less than or equal to Sqrt_Range'Last
+         pragma Loop_Invariant (Shift_Right (Y, I) <= U32 (Sqrt_Range'Last));
+
          pragma Loop_Invariant (I32 (Shift_Right (Y, I)) *
                                 I32 (Shift_Right (Y, I)) <= X);
 
          --  Similarly, if we set all the unknown least-significant
          --  bits to one (with value 2**I-1), and add another one,
          --  then that value must be too big so...
+         pragma Loop_Invariant (2**I - 1 in 0 .. 32767);
+         pragma Loop_Invariant
+            (I64 (Shift_Right (Y, I)) + I64 (2**I - 1) + 1 >= 1);
+         pragma Loop_Invariant
+            (I64 (Shift_Right (Y, I)) + I64 (2**I - 1) + 1 <= 79108);
          pragma Loop_Invariant
             ((I64 (Shift_Right (Y, I)) + I64 (2**I - 1) + 1) *
              (I64 (Shift_Right (Y, I)) + I64 (2**I - 1) + 1) > I64 (X));
